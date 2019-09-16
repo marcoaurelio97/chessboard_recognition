@@ -3,6 +3,8 @@ import numpy as np
 import os
 import glob
 import requests
+from functions import send_positions
+from matplotlib import pyplot as plt
 
 
 def main():
@@ -24,12 +26,14 @@ def main():
 
 
 def main2():
-    img = cv2.imread("initial_board.png")
-    img_resized = cv2.resize(img, (550, 550))
+    img = cv2.imread("board1.jpg")
+    # 889 x 877
+    img_resized = cv2.resize(img, (639, 627))
 
     board = find_pieces(img_resized)
 
     print(board)
+    # send_positions(board)
 
     # cv2.imshow('Chessboard Recognition', img_resized)
 
@@ -55,10 +59,22 @@ def main3():
 
 def find_pieces(img):
     img_copy = img.copy()
-    board = np.zeros((8, 8))
-    square_size = 68
-    offset_x = 3
-    offset_y = 3
+    # board = np.zeros((8, 8))
+    board = {
+        0: [0, 0, 0, 0, 0, 0, 0, 0],
+        1: [0, 0, 0, 0, 0, 0, 0, 0],
+        2: [0, 0, 0, 0, 0, 0, 0, 0],
+        3: [0, 0, 0, 0, 0, 0, 0, 0],
+        4: [0, 0, 0, 0, 0, 0, 0, 0],
+        5: [0, 0, 0, 0, 0, 0, 0, 0],
+        6: [0, 0, 0, 0, 0, 0, 0, 0],
+        7: [0, 0, 0, 0, 0, 0, 0, 0]
+    }
+    square_size = 78
+    offset_x = 2
+    offset_y = 4
+
+    count = 0
 
     for y in range(0, 8):
         for x in range(0, 8):
@@ -69,31 +85,55 @@ def find_pieces(img):
 
             cv2.rectangle(img_copy, (start_y, start_x), (end_y, end_x), (255, 0, 0), 3, 8, 0)
             roi = img[start_y: end_y, start_x: end_x]
+            # cv2.imshow(f"{count}", roi)
+            cv2.imwrite("histogram.png", roi)
+            count += 1
 
             gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+            histogram = cv2.calcHist([gray], [0], None, [256], [0, 256])
 
-            ret, thresh = cv2.threshold(gray, 10, 255, cv2.THRESH_BINARY)
-            contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+            print(histogram)
+            print(len(histogram))
+            plt.plot(histogram)
+            plt.show()
 
-            if len(contours) > 1:
-                board[y][x] = 1
+            # ret, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+            # cv2.imshow(f"{count}", thresh)
+            # contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            # print(len(contours))
+            # if len(contours) > 5:
+            #     board[y][x] = 1
+
+            # hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+            # lower_white = (0, 0, 170)
+            # upper_white = (131, 255, 255)
+            # mask = cv2.inRange(hsv, lower_white, upper_white)
+            # # res = cv2.bitwise_and(roi, roi, mask=mask)
+            # contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            # # if contours:
+            # cv2.drawContours(roi, contours, -1, (0, 255, 0), 1)
+            # if len(contours) > 5:
+            #     board[y][x] = 1
 
     cv2.imshow("rectangles", img_copy)
     return board
 
 
-def clear_files():
-    files = glob.glob("squares/*")
-    for f in files:
-        os.remove(f)
+def teste(img):
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    gray = np.float32(gray)
 
-    files = glob.glob("founds/*")
-    for f in files:
-        os.remove(f)
+    corners = cv2.goodFeaturesToTrack(gray, 1000, 0.01, 60)
+    corners = np.int0(corners)
+
+    for corner in corners:
+        x, y = corner.ravel()
+        cv2.circle(img, (x, y), 3, 255, -1)
+
+    cv2.imshow("agora vai", img)
 
 
 if __name__ == "__main__":
-    clear_files()
     # main()  #webcam
     main2()  #photo
     # main3()  #cellphone

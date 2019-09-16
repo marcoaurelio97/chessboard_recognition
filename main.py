@@ -77,6 +77,7 @@ def find_board(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     # ret, thresh = cv2.threshold(gray, 200, 230, cv2.THRESH_BINARY_INV)
     ret, thresh = cv2.threshold(gray, 100, 140, cv2.THRESH_BINARY)
+    # thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2)
     cv2.imshow("thresh", thresh)
 
     contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)

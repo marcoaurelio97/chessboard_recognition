@@ -26,11 +26,11 @@ def main():
 
 
 def main2():
-    img = cv2.imread("board1.jpg")
+    img = cv2.imread("board4.jpeg")
     # 889 x 877
-    img_resized = cv2.resize(img, (639, 627))
+    # img_resized = cv2.resize(img, (639, 627))
 
-    board = find_pieces(img_resized)
+    board = find_pieces(img)
 
     print(board)
     # send_positions(board)
@@ -59,7 +59,6 @@ def main3():
 
 def find_pieces(img):
     img_copy = img.copy()
-    # board = np.zeros((8, 8))
     board = {
         0: [0, 0, 0, 0, 0, 0, 0, 0],
         1: [0, 0, 0, 0, 0, 0, 0, 0],
@@ -70,9 +69,9 @@ def find_pieces(img):
         6: [0, 0, 0, 0, 0, 0, 0, 0],
         7: [0, 0, 0, 0, 0, 0, 0, 0]
     }
-    square_size = 78
-    offset_x = 2
-    offset_y = 4
+    square_size = 93
+    offset_x = 13
+    offset_y = 17
 
     count = 0
 
@@ -83,54 +82,51 @@ def find_pieces(img):
             end_y = start_y + square_size
             end_x = start_x + square_size
 
-            cv2.rectangle(img_copy, (start_y, start_x), (end_y, end_x), (255, 0, 0), 3, 8, 0)
+            cv2.rectangle(img_copy, (start_y, start_x), (end_y, end_x), (0, 0, 255), 1, 8, 0)
             roi = img[start_y: end_y, start_x: end_x]
             # cv2.imshow(f"{count}", roi)
-            cv2.imwrite("histogram.png", roi)
+            # cv2.imwrite("roi.png", roi)
             count += 1
 
-            gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-            histogram = cv2.calcHist([gray], [0], None, [256], [0, 256])
+            # roi = cv2.imread("roi.png")
+            hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
 
-            print(histogram)
-            print(len(histogram))
-            plt.plot(histogram)
-            plt.show()
+            lower_color = np.array([155, 5, -7])
+            upper_color = np.array([175, 25, 73])
+            mask1 = cv2.inRange(hsv, lower_color, upper_color)
 
-            # ret, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
-            # cv2.imshow(f"{count}", thresh)
-            # contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-            # print(len(contours))
-            # if len(contours) > 5:
-            #     board[y][x] = 1
+            lower_color = np.array([-10, -10, 214])
+            upper_color = np.array([10, 10, 294])
+            mask2 = cv2.inRange(hsv, lower_color, upper_color)
+            # res = cv2.bitwise_and(roi, roi, mask=mask)
 
-            # hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
-            # lower_white = (0, 0, 170)
-            # upper_white = (131, 255, 255)
-            # mask = cv2.inRange(hsv, lower_white, upper_white)
-            # # res = cv2.bitwise_and(roi, roi, mask=mask)
-            # contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            # # if contours:
-            # cv2.drawContours(roi, contours, -1, (0, 255, 0), 1)
-            # if len(contours) > 5:
-            #     board[y][x] = 1
+            contours1, _ = cv2.findContours(mask1, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+            cv2.drawContours(roi, contours1, -1, (0, 0, 255), 2)
 
-    cv2.imshow("rectangles", img_copy)
+            contours2, _ = cv2.findContours(mask2, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+            cv2.drawContours(roi, contours2, -1, (0, 255, 0), 2)
+
+            if len(contours1) or len(contours2):
+                board[y][x] = 1
+
+            # if (y == 1 and x == 2) or (y == 1 and x == 4):
+                cv2.imshow(f"image{count}", roi)
+                # cv2.imshow(f"mask1{count}", mask1)
+                # cv2.imshow(f"mask2{count}", mask2)
+                # cv2.imshow(F"result{count}", res)
+
+    # cv2.imshow("rectangles", img_copy)
     return board
 
 
-def teste(img):
+def histogram(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    gray = np.float32(gray)
+    histogram = cv2.calcHist([gray], [0], None, [256], [0, 256])
 
-    corners = cv2.goodFeaturesToTrack(gray, 1000, 0.01, 60)
-    corners = np.int0(corners)
-
-    for corner in corners:
-        x, y = corner.ravel()
-        cv2.circle(img, (x, y), 3, 255, -1)
-
-    cv2.imshow("agora vai", img)
+    print(histogram)
+    print(len(histogram))
+    plt.plot(histogram)
+    plt.show()
 
 
 if __name__ == "__main__":
